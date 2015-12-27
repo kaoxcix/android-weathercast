@@ -1,8 +1,14 @@
 <resources>
-    <string name="app_name">weathercast</string>
-
+    <!-- Other -->
+    <string name="app_name">Weather Cast</string>
     <string name="navigation_drawer_open">Open navigation drawer</string>
     <string name="navigation_drawer_close">Close navigation drawer</string>
-
     <string name="action_settings">Settings</string>
+    <string name="title_activity_weather_add">Add Location</string>
+
+    <!-- Common message -->
+    <string name="message_progress_loading">Please wait</string>
+
+    <!-- Error message -->
+    <string name="errmessage_english_only">Please enter location name in English only</string>
 </resources>

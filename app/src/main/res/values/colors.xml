@@ -1,6 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <!-- Common color -->
+    <color name="defaultWhite">#ECECEC</color>
+    <color name="defaultBlack">#2B2B2B</color>
+
+    <!-- Theme Color -->
     <color name="colorPrimary">#3F51B5</color>
     <color name="colorPrimaryDark">#303F9F</color>
     <color name="colorAccent">#FF4081</color>
+
+    <!-- Material Search View color -->
 </resources>
