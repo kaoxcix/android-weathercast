@@ -11,7 +11,6 @@ import android.support.v7.widget.Toolbar;
 import android.text.TextUtils;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.widget.Toast;
 
 import com.miguelcatalan.materialsearchview.MaterialSearchView;
 import java.util.ArrayList;
@@ -20,7 +19,7 @@ import kaoxcix.weathercast.R;
 import kaoxcix.weathercast.util.httpUtils;
 import kaoxcix.weathercast.util.checkUtils;
 
-public class weatherAdd extends AppCompatActivity {
+public class weatherAddActivity extends AppCompatActivity {
     private MaterialSearchView searchView;
 
     @Override
@@ -39,9 +38,9 @@ public class weatherAdd extends AppCompatActivity {
             @Override
             public boolean onQueryTextSubmit(String query) {
                 checkUtils check = new checkUtils();
-                if(check.checkStringEnglishAlphabet(query) == false) {
+                if(check.isEnglishAlphabetString(query) == false) {
                     Snackbar.make(searchView, getString(R.string.errmessage_english_only), Snackbar.LENGTH_SHORT).show();
-//                    Toast.makeText(weatherAdd.this, "ttest", Toast.LENGTH_SHORT).show();
+//                    Toast.makeText(weatherAddActivity.this, "ttest", Toast.LENGTH_SHORT).show();
                 } else {
                     queryLocation(query);
                 }
@@ -80,12 +79,10 @@ public class weatherAdd extends AppCompatActivity {
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        switch (item.getItemId()) {
-            case android.R.id.home:
-                finish();
-                break;
-            default:
-                break;
+        int id = item.getItemId();
+        if (id == android.R.id.home) {
+            finish();
+            return true;
         }
 
         return super.onOptionsItemSelected(item);
@@ -117,7 +114,7 @@ public class weatherAdd extends AppCompatActivity {
     }
 
     private void queryLocation(final String query) {
-        final ProgressDialog progressBar = new ProgressDialog(weatherAdd.this);
+        final ProgressDialog progressBar = new ProgressDialog(weatherAddActivity.this);
         new AsyncTask<Void, Void, String>() {
             @Override
             protected void onPreExecute() {
