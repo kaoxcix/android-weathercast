@@ -1,4 +1,4 @@
-package kaoxcix.weathercast.ui;
+package kaoxcix.weathercast.ui.activity;
 
 import android.app.ProgressDialog;
 import android.content.Intent;
@@ -11,6 +11,7 @@ import android.support.v7.widget.Toolbar;
 import android.text.TextUtils;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.Toast;
 
 import com.miguelcatalan.materialsearchview.MaterialSearchView;
 import java.util.ArrayList;
@@ -133,6 +134,7 @@ public class weatherAddActivity extends AppCompatActivity {
             @Override
             protected void onPostExecute(String string) {
                 progressBar.dismiss();
+                Toast.makeText(weatherAddActivity.this, string, Toast.LENGTH_LONG).show();
             }
         }.execute();
     }

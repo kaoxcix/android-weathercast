@@ -1,4 +1,4 @@
-package kaoxcix.weathercast.ui;
+package kaoxcix.weathercast.ui.activity;
 
 import android.os.Bundle;
 import android.preference.PreferenceFragment;
