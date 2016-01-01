@@ -7,9 +7,10 @@
     <string name="title_activity_weather_add">Add Location</string>
     <string name="title_activity_settings">Settings</string>
 
-    <!-- Common message -->
+    <!-- Message -->
     <string name="message_progress_loading">Please wait</string>
-
-    <!-- Error message -->
-    <string name="errmessage_english_only">Please enter location name in English only</string>
+    <string name="message_english_only">Please enter location name in English only</string>
+    <string name="message_location_added">This area has already been added</string>
+    <string name="message_location_notfound">Location unavailable</string>
+    <string name="message_weather_notfound">Weather unavailable</string>
 </resources>

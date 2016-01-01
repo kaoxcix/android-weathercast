@@ -9,5 +9,7 @@
     <color name="colorPrimaryDark">#303F9F</color>
     <color name="colorAccent">#FF4081</color>
 
-    <!-- Material Search View color -->
+    <!-- Location Search color -->
+    <color name="foundArea">#525252</color>
+    <color name="foundCountry">#868686</color>
 </resources>
