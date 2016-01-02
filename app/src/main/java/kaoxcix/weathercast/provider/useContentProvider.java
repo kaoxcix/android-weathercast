@@ -24,7 +24,7 @@ public class useContentProvider extends ContentProvider {
 	
 	@Override
 	public boolean onCreate() {
-		myDb = new useSQLiteOpenHelper(getContext(),"weatherCastDB.db",null,1);
+		myDb = new useSQLiteOpenHelper(getContext(),"weatherCastV2DB.db",null,1);
 		return true;
 	}
 

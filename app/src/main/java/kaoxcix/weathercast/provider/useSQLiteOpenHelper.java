@@ -23,7 +23,7 @@ public class useSQLiteOpenHelper extends SQLiteOpenHelper {
 					");";
 		db.execSQL(SQL_COMMAND);
 		
-		SQL_COMMAND = "CREATE TABLE Weather ("+
+		SQL_COMMAND = "CREATE TABLE weather ("+
 					  "id INTEGER PRIMARY KEY AUTOINCREMENT,"+
 					  "area TEXT,"+
 					  "date TEXT,"+
@@ -32,7 +32,7 @@ public class useSQLiteOpenHelper extends SQLiteOpenHelper {
 					  "temp_max TEXT,"+
 					  "sunrise TEXT,"+
 					  "sunset TEXT,"+
-					  "Weather TEXT,"+
+					  "weather TEXT,"+
 					  "description TEXT,"+
 					  "created TEXT,"+
 					  "current TEXT DEFAULT 'false'"+
@@ -43,7 +43,7 @@ public class useSQLiteOpenHelper extends SQLiteOpenHelper {
 	@Override
 	public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
 		db.execSQL("DROP TABLE location if exists location");
-		db.execSQL("DROP TABLE Weather if exists Weather");
+		db.execSQL("DROP TABLE Weather if exists weather");
 		onCreate(db);
 	}
 }

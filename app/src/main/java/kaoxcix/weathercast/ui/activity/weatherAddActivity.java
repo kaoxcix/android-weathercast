@@ -3,10 +3,12 @@ package kaoxcix.weathercast.ui.activity;
 import android.app.ProgressDialog;
 import android.content.ContentValues;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.speech.RecognizerIntent;
 import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
@@ -18,7 +20,6 @@ import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ListView;
 import android.widget.SimpleAdapter;
-import android.widget.Toast;
 
 import com.google.gson.Gson;
 import com.miguelcatalan.materialsearchview.MaterialSearchView;
@@ -33,7 +34,6 @@ import kaoxcix.weathercast.R;
 import kaoxcix.weathercast.dao.locationList.LocationList;
 import kaoxcix.weathercast.dao.locationList.Prediction;
 import kaoxcix.weathercast.dao.weather.current.CurrentWeather;
-import kaoxcix.weathercast.dao.weather.current.Weather;
 import kaoxcix.weathercast.dao.weather.forecast.ForecastWeather;
 import kaoxcix.weathercast.dao.weather.forecast.List;
 import kaoxcix.weathercast.util.httpUtils;
@@ -46,6 +46,8 @@ public class weatherAddActivity extends AppCompatActivity {
     private ArrayList<HashMap<String,String>> locationArrayList;
     private final Uri uriLocation = Uri.parse("content://weatherCastDB/location");
     private final Uri uriWeather = Uri.parse("content://weatherCastDB/Weather");
+    private SharedPreferences sp;
+    private SharedPreferences.Editor spEditor;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -55,8 +57,23 @@ public class weatherAddActivity extends AppCompatActivity {
         setSupportActionBar(toolbar);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
+        initSharedPreferences();
         initInstances();
+        initSearchView();
 
+    }
+
+    private void initSharedPreferences() {
+        sp = PreferenceManager.getDefaultSharedPreferences(this);
+        spEditor = sp.edit();
+    }
+
+    private void initInstances(){
+        searchView = (MaterialSearchView) findViewById(R.id.search_view);
+        locationListView = (ListView) findViewById(R.id.locationListView);
+    }
+
+    private void initSearchView() {
         searchView.setVoiceSearch(false);
 //        searchView.setCursorDrawable(R.drawable.ic_menu_camera);
 //        searchView.setSuggestions(getResources().getStringArray(R.array.query_suggestions));
@@ -108,11 +125,6 @@ public class weatherAddActivity extends AppCompatActivity {
         });
     }
 
-    private void initInstances(){
-        searchView = (MaterialSearchView) findViewById(R.id.search_view);
-        locationListView = (ListView) findViewById(R.id.locationListView);
-    }
-
     private void queryLocation(final String query) {
         final ProgressDialog progressBar = new ProgressDialog(weatherAddActivity.this);
         final View rootView = findViewById(R.id.rootView);
@@ -160,7 +172,7 @@ public class weatherAddActivity extends AppCompatActivity {
                     }
                     String[] from = new String[]{"area1", "other"};
                     int[] to = new int[]{R.id.txtFoundArea1, R.id.txtFoundOther};
-                    int layout = R.layout.fragment_weather_add_location_list;
+                    int layout = R.layout.list_weather_add_location_list;
                     locationAdapter = new SimpleAdapter(weatherAddActivity.this, locationArrayList, layout, from, to);
                     locationListView.setAdapter(locationAdapter);
                     progressBar.dismiss();
@@ -251,7 +263,12 @@ public class weatherAddActivity extends AppCompatActivity {
                             check++;
                         }
                     }
-                    progressBar.dismiss();
+                    spEditor.putString("selectedArea1", area1);
+                    spEditor.putString("selectedArea2", area2);
+                    spEditor.putString("selectedCountry", country);
+                    spEditor.commit();
+                    Intent intent = new Intent(weatherAddActivity.this, mainActivity.class);
+                    startActivity(intent);
                 } else {
                     progressBar.dismiss();
                     Snackbar.make(rootView, getString(R.string.message_location_notfound), Snackbar.LENGTH_SHORT).show();
@@ -275,7 +292,8 @@ public class weatherAddActivity extends AppCompatActivity {
     public boolean onOptionsItemSelected(MenuItem item) {
         int id = item.getItemId();
         if (id == android.R.id.home) {
-            finish();
+            Intent intent = new Intent(weatherAddActivity.this, mainActivity.class);
+            startActivity(intent);
             return true;
         }
 

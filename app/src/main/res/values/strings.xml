@@ -6,6 +6,8 @@
     <string name="action_settings">Settings</string>
     <string name="title_activity_weather_add">Add Location</string>
     <string name="title_activity_settings">Settings</string>
+    <string name="title_activity_weathet_list">Locations</string>
+    <string name="title_delete_location">Delete location</string>
 
     <!-- Message -->
     <string name="message_progress_loading">Please wait</string>
@@ -13,4 +15,5 @@
     <string name="message_location_added">This area has already been added</string>
     <string name="message_location_notfound">Location unavailable</string>
     <string name="message_weather_notfound">Weather unavailable</string>
+    <string name="message_delete_location">This location will be delete and weather information will not be displayed</string>
 </resources>

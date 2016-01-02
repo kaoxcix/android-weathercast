@@ -12,4 +12,30 @@
     <!-- Location Search color -->
     <color name="foundArea">#525252</color>
     <color name="foundCountry">#868686</color>
+
+    <!-- Weather color -->
+    <color name="weatherFontOpacityBlack">#CC000000</color>
+    <color name="weatherFontWhite">#F0F0F0</color>
+
+    <color name="weatherThunderstormBlue">#373C54</color>
+    <color name="weatherDarkRainyBlue">#319F9C</color>
+    <color name="weatherLightRainyBlue">#A0DED1</color>
+    <color name="weatherCloudCream">#E4D6BC</color>
+    <color name="weatherSunnyRed">#CC5656</color>
+    <color name="weatherHurricaneWarningRed">#980000</color>
+    <color name="weatherSnowWhite">#E6E8E3</color>
+    <color name="weatherDarkWindBrown">#A6AB8B</color>
+    <color name="weatherLightWindBrown">#BFC096</color>
+    <color name="weatherOther">#DCDCBA</color>
+
+    <color name="weatherThunderstormBlueDark">#040921</color>
+    <color name="weatherDarkRainyBlueDark">#006C69</color>
+    <color name="weatherLightRainyBlueDark">#6DAB9E</color>
+    <color name="weatherCloudCreamDark">#B1A389</color>
+    <color name="weatherSunnyRedDark">#992323</color>
+    <color name="weatherHurricaneWarningRedDark">#650000</color>
+    <color name="weatherSnowWhiteDark">#B3B5B0</color>
+    <color name="weatherDarkWindBrownDark">#737858</color>
+    <color name="weatherLightWindBrownDark">#8C8D63</color>
+    <color name="weatherOtherDark">#A9A987</color>
 </resources>

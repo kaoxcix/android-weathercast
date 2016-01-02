@@ -9,4 +9,9 @@
 
     <dimen name="foundAreaFontSize">18sp</dimen>
     <dimen name="foundCountryFontSize">14sp</dimen>
+
+    <dimen name="locationAreaPaddingLR">16dp</dimen>
+    <dimen name="locationAreaPaddingTB">12dp</dimen>
+    <dimen name="locationAreaFontSize">20sp</dimen>
+    <dimen name="locationCountryFontSize">14sp</dimen>
 </resources>
