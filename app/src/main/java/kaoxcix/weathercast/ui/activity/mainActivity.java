@@ -26,6 +26,7 @@ import android.view.ViewGroup;
 import android.view.Window;
 import android.view.WindowManager;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.SimpleAdapter;
 import android.widget.TextView;
@@ -510,6 +511,8 @@ public class mainActivity extends AppCompatActivity implements NavigationView.On
 
                 convertView.setBackgroundResource(assetUtils.getBackgroundColorId(Integer.parseInt(map.get("weather"))));
                 if(position == getCount()-1){
+                    LinearLayout weatherLayout = (LinearLayout) findViewById(R.id.weatherLayout);
+                    weatherLayout.setBackgroundResource(assetUtils.getBackgroundColorId(Integer.parseInt(map.get("weather"))));
                     forecastWeatherListView.setBackgroundResource(assetUtils.getBackgroundColorId(Integer.parseInt(map.get("weather"))));
                 }
                 imgvForeIcon.setImageResource(assetUtils.getWeatherImageId(Integer.parseInt(map.get("weather"))));

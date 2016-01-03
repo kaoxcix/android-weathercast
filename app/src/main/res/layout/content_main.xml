@@ -10,6 +10,7 @@
     android:id="@+id/rootView">
 
     <LinearLayout
+        android:id="@+id/weatherLayout"
         android:layout_width="fill_parent"
         android:layout_height="fill_parent"
         android:orientation="vertical" >
