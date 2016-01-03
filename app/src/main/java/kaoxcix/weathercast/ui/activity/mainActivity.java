@@ -118,44 +118,6 @@ public class mainActivity extends AppCompatActivity implements NavigationView.On
 
     }
 
-    private void getWeather(String date){
-        imperial = sp.getBoolean("use_imperial", false);
-        auto_refresh = sp.getBoolean("auto_refresh", true);
-        if(imperial == true){
-            multiply = 9.0/5.0;
-            plus = 32.0;
-        }
-        else{
-            multiply = 1;
-            plus = 0;
-        }
-
-        setCurrentWeatherInfo(location);
-        setForecastWeatherInfo(location);
-
-        if(auto_refresh == true) {
-            Date c_date = new Date(new SimpleDateFormat("MM/dd/yyyy HH:mm:ss").format(new Date()));
-            Date saved_date = new Date(date);
-            long diffInMillisec = c_date.getTime() - saved_date.getTime();
-            long diffInSec = TimeUnit.MILLISECONDS.toSeconds(diffInMillisec);
-            long seconds = diffInSec % 60;
-            diffInSec /= 60;
-            long minutes = diffInSec % 60;
-            diffInSec /= 60;
-            long hours = diffInSec % 24;
-            diffInSec /= 24;
-            long days = diffInSec;
-            Double diffHour = Double.parseDouble(hours + "." + minutes);
-            if (diffHour >= 3.0) {
-                if(checkUtils.isNetworkAvailable() == true) {
-                    getLatestSelectedWeatherInfo(selectedArea1, selectedArea2, selectedCountry);
-                } else {
-                    Snackbar.make(rootView, getString(R.string.message_no_network_connection), Snackbar.LENGTH_SHORT).show();
-                }
-            }
-        }
-    }
-
     private void initWeatherInfoListView() {
 
         currentWeatherListView.setDivider(null);
@@ -200,6 +162,44 @@ public class mainActivity extends AppCompatActivity implements NavigationView.On
                 createDate = dateCursor.getString(dateCursor.getColumnIndex("created"));
             }
             getWeather(createDate);
+        }
+    }
+
+    private void getWeather(String date){
+        imperial = sp.getBoolean("use_imperial", false);
+        auto_refresh = sp.getBoolean("auto_refresh", true);
+        if(imperial == true){
+            multiply = 9.0/5.0;
+            plus = 32.0;
+        }
+        else{
+            multiply = 1;
+            plus = 0;
+        }
+
+        setCurrentWeatherInfo(location);
+        setForecastWeatherInfo(location);
+
+        if(auto_refresh == true) {
+            Date c_date = new Date(new SimpleDateFormat("MM/dd/yyyy HH:mm:ss").format(new Date()));
+            Date saved_date = new Date(date);
+            long diffInMillisec = c_date.getTime() - saved_date.getTime();
+            long diffInSec = TimeUnit.MILLISECONDS.toSeconds(diffInMillisec);
+            long seconds = diffInSec % 60;
+            diffInSec /= 60;
+            long minutes = diffInSec % 60;
+            diffInSec /= 60;
+            long hours = diffInSec % 24;
+            diffInSec /= 24;
+            long days = diffInSec;
+            Double diffHour = Double.parseDouble(hours + "." + minutes);
+            if (diffHour >= 3.0) {
+                if(checkUtils.isNetworkAvailable() == true) {
+                    getLatestSelectedWeatherInfo(selectedArea1, selectedArea2, selectedCountry);
+                } else {
+                    Snackbar.make(rootView, getString(R.string.message_no_network_connection), Snackbar.LENGTH_SHORT).show();
+                }
+            }
         }
     }
 
