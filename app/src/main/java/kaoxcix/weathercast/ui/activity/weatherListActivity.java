@@ -97,6 +97,7 @@ public class weatherListActivity extends AppCompatActivity {
             }
             locationArrayList.add(map);
         }
+        cursor.close();
 
         locationAdapter = new SimpleAdapter(weatherListActivity.this, locationArrayList, layout, from, to){
             //Change layout for each item
@@ -166,15 +167,25 @@ public class weatherListActivity extends AppCompatActivity {
     public boolean onOptionsItemSelected(MenuItem item) {
         int id = item.getItemId();
         if (id == android.R.id.home) {
+            finish();
             Intent intent = new Intent(weatherListActivity.this, mainActivity.class);
             startActivity(intent);
             return true;
         } else if (id == R.id.action_add) {
+            finish();
             Intent intent = new Intent(weatherListActivity.this, weatherAddActivity.class);
             startActivity(intent);
             return true;
         }
 
         return super.onOptionsItemSelected(item);
+    }
+
+    @Override
+    public void onBackPressed() {
+        finish();
+        Intent intent = new Intent(weatherListActivity.this, mainActivity.class);
+        startActivity(intent);
+        super.onBackPressed();
     }
 }

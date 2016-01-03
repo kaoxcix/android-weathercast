@@ -6,8 +6,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.database.Cursor;
-import android.net.ConnectivityManager;
-import android.net.NetworkInfo;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Build;
@@ -163,6 +161,7 @@ public class mainActivity extends AppCompatActivity implements NavigationView.On
             }
             getWeather(createDate);
         }
+        checkLocationCursor.close();
     }
 
     private void getWeather(String date){
@@ -387,6 +386,7 @@ public class mainActivity extends AppCompatActivity implements NavigationView.On
                         getApplicationContext().getContentResolver().delete(uriWeather, "area = '"+area+"'", null);
                     }
                 }
+                locationCursor.close();
                 return null;
             }
 
@@ -416,6 +416,7 @@ public class mainActivity extends AppCompatActivity implements NavigationView.On
             map.put("updated", "Updated : "+currentCursor.getString(currentCursor.getColumnIndex("created")));
             currentWeatherInfoList.add(map);
         }
+        currentCursor.close();
 
         int layout = R.layout.list_weather_info_current;
         SimpleAdapter mAdapter = new SimpleAdapter(mainActivity.this, currentWeatherInfoList, layout, from, to){
@@ -470,8 +471,7 @@ public class mainActivity extends AppCompatActivity implements NavigationView.On
         String[] from = new String[]{"day", "temp", "description"};
         int[] to = new int[]{R.id.txtForeDay, R.id.txtForeTemp, R.id.txtForeDescription};
         forecastWeatherInfoList = new ArrayList<HashMap<String,String>>();
-        while(forecastCursor.moveToNext())
-        {
+        while(forecastCursor.moveToNext()) {
             String temp_min = new DecimalFormat("####0.0").format((multiply*forecastCursor.getDouble(forecastCursor.getColumnIndex("temp_min")))+plus),
                     temp_max = new DecimalFormat("####0.0").format((multiply*forecastCursor.getDouble(forecastCursor.getColumnIndex("temp_max")))+plus);
             HashMap<String,String> map = new HashMap<String,String>();
@@ -493,6 +493,7 @@ public class mainActivity extends AppCompatActivity implements NavigationView.On
                     forecastCursor.getString(forecastCursor.getColumnIndex("description")).toLowerCase().substring(1));
             forecastWeatherInfoList.add(map);
         }
+        forecastCursor.close();
 
         int layout = R.layout.list_weather_info_forecast;
         SimpleAdapter mAdapter = new SimpleAdapter(mainActivity.this, forecastWeatherInfoList, layout, from, to){
@@ -526,6 +527,9 @@ public class mainActivity extends AppCompatActivity implements NavigationView.On
             drawer.closeDrawer(GravityCompat.START);
         } else {
             super.onBackPressed();
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
+                finishAffinity();
+            }
         }
     }
 

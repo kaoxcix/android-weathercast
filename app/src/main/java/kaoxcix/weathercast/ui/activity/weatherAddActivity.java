@@ -149,6 +149,7 @@ public class weatherAddActivity extends AppCompatActivity {
                         Snackbar.make(rootView, getString(R.string.message_no_network_connection), Snackbar.LENGTH_SHORT).show();
                     }
                 }
+                addedAreaCursor.close();
             }
         });
     }
