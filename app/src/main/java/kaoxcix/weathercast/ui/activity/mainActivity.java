@@ -6,6 +6,8 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.database.Cursor;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Build;
@@ -46,6 +48,7 @@ import kaoxcix.weathercast.dao.weather.current.CurrentWeather;
 import kaoxcix.weathercast.dao.weather.forecast.ForecastWeather;
 import kaoxcix.weathercast.dao.weather.forecast.List;
 import kaoxcix.weathercast.util.assetUtils;
+import kaoxcix.weathercast.util.checkUtils;
 import kaoxcix.weathercast.util.httpUtils;
 
 public class mainActivity extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener {
@@ -68,6 +71,8 @@ public class mainActivity extends AppCompatActivity implements NavigationView.On
     private String selectedCountry;
     private String location;
     private String createDate;
+    private checkUtils checkUtils;
+    private View rootView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -106,8 +111,10 @@ public class mainActivity extends AppCompatActivity implements NavigationView.On
     }
 
     private void initInstances() {
+        checkUtils = new checkUtils(this);
         currentWeatherListView = (ListView) findViewById(R.id.currentWeatherListView);
         forecastWeatherListView = (ListView) findViewById(R.id.forecastWeatherListView);
+        rootView = findViewById(R.id.rootView);
 
     }
 
@@ -140,7 +147,11 @@ public class mainActivity extends AppCompatActivity implements NavigationView.On
             long days = diffInSec;
             Double diffHour = Double.parseDouble(hours + "." + minutes);
             if (diffHour >= 3.0) {
-                getLatestSelectedWeatherInfo(selectedArea1, selectedArea2, selectedCountry);
+                if(checkUtils.isNetworkAvailable() == true) {
+                    getLatestSelectedWeatherInfo(selectedArea1, selectedArea2, selectedCountry);
+                } else {
+                    Snackbar.make(rootView, getString(R.string.message_no_network_connection), Snackbar.LENGTH_SHORT).show();
+                }
             }
         }
     }
@@ -192,9 +203,7 @@ public class mainActivity extends AppCompatActivity implements NavigationView.On
         }
     }
 
-
     private void getLatestSelectedWeatherInfo(final String area1, final String area2, final String country) {
-        final View rootView = findViewById(R.id.rootView);
         final ProgressDialog progressBar = new ProgressDialog(mainActivity.this);
         new AsyncTask<Void, Void, String>() {
             private String area;
@@ -533,7 +542,11 @@ public class mainActivity extends AppCompatActivity implements NavigationView.On
             Intent intent = new Intent(this, settingsActivity.class);
             startActivity(intent);
         } else if (id == R.id.nav_weather_update) {
-            updateAllWeatherInfo();
+            if(checkUtils.isNetworkAvailable() == true) {
+                updateAllWeatherInfo();
+            } else {
+                Snackbar.make(rootView, getString(R.string.message_no_network_connection), Snackbar.LENGTH_SHORT).show();
+            }
         } else if (id == R.id.nav_about) {
             Intent intent = new Intent(this, aboutActivity.class);
             startActivity(intent);

@@ -51,6 +51,8 @@ public class weatherAddActivity extends AppCompatActivity {
     private final Uri uriWeather = Uri.parse("content://weatherCastV2DB/Weather");
     private SharedPreferences sp;
     private SharedPreferences.Editor spEditor;
+    private checkUtils checkUtils;
+    private View rootView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -73,8 +75,10 @@ public class weatherAddActivity extends AppCompatActivity {
     }
 
     private void initInstances(){
+        checkUtils = new checkUtils(this);
         searchView = (MaterialSearchView) findViewById(R.id.search_view);
         locationListView = (ListView) findViewById(R.id.locationListView);
+        rootView = findViewById(R.id.rootView);
     }
 
     private void initActionAndStatusBar() {
@@ -96,11 +100,15 @@ public class weatherAddActivity extends AppCompatActivity {
         searchView.setOnQueryTextListener(new MaterialSearchView.OnQueryTextListener() {
             @Override
             public boolean onQueryTextSubmit(String query) {
-                checkUtils check = new checkUtils();
+                checkUtils check = new checkUtils(weatherAddActivity.this);
                 if(check.isEnglishAlphabetString(query) == false) {
                     Snackbar.make(searchView, getString(R.string.message_english_only), Snackbar.LENGTH_SHORT).show();
                 } else {
-                    queryLocation(query.trim());
+                    if(checkUtils.isNetworkAvailable() == true) {
+                        queryLocation(query.trim());
+                    } else {
+                        Snackbar.make(rootView, getString(R.string.message_no_network_connection), Snackbar.LENGTH_SHORT).show();
+                    }
                 }
                 return false;
             }
@@ -135,7 +143,11 @@ public class weatherAddActivity extends AppCompatActivity {
                 if (addedAreaCursor.getCount() == 1) {
                     Snackbar.make(view, getString(R.string.message_location_added), Snackbar.LENGTH_SHORT).show();
                 } else {
-                    queryWeatherData(area1, area2, country);
+                    if(checkUtils.isNetworkAvailable() == true) {
+                        queryWeatherData(area1, area2, country);
+                    } else {
+                        Snackbar.make(rootView, getString(R.string.message_no_network_connection), Snackbar.LENGTH_SHORT).show();
+                    }
                 }
             }
         });
@@ -143,7 +155,6 @@ public class weatherAddActivity extends AppCompatActivity {
 
     private void queryLocation(final String query) {
         final ProgressDialog progressBar = new ProgressDialog(weatherAddActivity.this);
-        final View rootView = findViewById(R.id.rootView);
         new AsyncTask<Void, Void, String>() {
             @Override
             protected void onPreExecute() {
