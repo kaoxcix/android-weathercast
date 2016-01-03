@@ -7,15 +7,19 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.LayoutInflater;
+import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.Window;
+import android.view.WindowManager;
 import android.widget.AdapterView;
 import android.widget.ImageView;
 import android.widget.ListView;
@@ -30,8 +34,8 @@ public class weatherListActivity extends AppCompatActivity {
     private ListView locationListView;
     private ArrayList<HashMap<String,String>> locationArrayList;
     private SimpleAdapter locationAdapter;
-    private final Uri uriLocation = Uri.parse("content://weatherCastDB/location");
-    private final Uri uriWeather = Uri.parse("content://weatherCastDB/Weather");
+    private final Uri uriLocation = Uri.parse("content://weatherCastV2DB/location");
+    private final Uri uriWeather = Uri.parse("content://weatherCastV2DB/Weather");
     private SharedPreferences sp;
     private SharedPreferences.Editor spEditor;
 
@@ -45,6 +49,7 @@ public class weatherListActivity extends AppCompatActivity {
 
         initSharedPreferences();
         initInstances();
+        initActionAndStatusBar();
         initLocationListView();
     }
 
@@ -55,6 +60,18 @@ public class weatherListActivity extends AppCompatActivity {
 
     private void initInstances() {
         locationListView = (ListView) findViewById(R.id.locationListView);
+    }
+
+    private void initActionAndStatusBar() {
+        int actionBarColor = sp.getInt("actionBarColor", R.color.colorPrimary);
+        int statusBarColor = sp.getInt("statusBarColor", R.color.colorPrimaryDark);
+        getSupportActionBar().setBackgroundDrawable(getResources().getDrawable(actionBarColor));
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            Window window = getWindow();
+            window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
+            window.clearFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS);
+            window.setStatusBarColor(getResources().getColor(statusBarColor));
+        }
     }
 
     private void initLocationListView() {
@@ -125,7 +142,7 @@ public class weatherListActivity extends AppCompatActivity {
         locationListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                HashMap<String,String> getMap = new HashMap<String,String>(locationArrayList.get(position));
+                HashMap<String, String> getMap = new HashMap<String, String>(locationArrayList.get(position));
                 String selectedArea1 = getMap.get("area1");
                 String selectedArea2 = getMap.get("area2");
                 String selectedCountry = getMap.get("country");
@@ -140,10 +157,20 @@ public class weatherListActivity extends AppCompatActivity {
     }
 
     @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.activity_weather_list, menu);
+        return true;
+    }
+
+    @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         int id = item.getItemId();
         if (id == android.R.id.home) {
             Intent intent = new Intent(weatherListActivity.this, mainActivity.class);
+            startActivity(intent);
+            return true;
+        } else if (id == R.id.action_add) {
+            Intent intent = new Intent(weatherListActivity.this, weatherAddActivity.class);
             startActivity(intent);
             return true;
         }

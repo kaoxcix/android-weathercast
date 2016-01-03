@@ -12,7 +12,7 @@
         android:theme="@style/AppTheme">
         <provider
             android:name=".provider.useContentProvider"
-            android:authorities="weatherCastDB" />
+            android:authorities="weatherCastV2DB" />
 
         <activity
             android:name=".ui.activity.mainActivity"
@@ -35,12 +35,15 @@
         <activity
             android:name=".ui.activity.weatherListActivity"
             android:label="@string/title_activity_weathet_list"
-            android:parentActivityName=".ui.activity.weatherAddActivity"
             android:theme="@style/AppTheme.NoActionBar">
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="kaoxcix.weathercast.ui.activity.weatherAddActivity" />
         </activity>
+        <activity
+            android:name=".ui.activity.aboutActivity"
+            android:label="@string/title_activity_about"
+            android:theme="@style/AppTheme.NoActionBar"></activity>
     </application>
 
 </manifest>

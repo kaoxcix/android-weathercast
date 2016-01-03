@@ -7,7 +7,7 @@
     <!-- Theme Color -->
     <color name="colorPrimary">#3F51B5</color>
     <color name="colorPrimaryDark">#303F9F</color>
-    <color name="colorAccent">#FF4081</color>
+    <color name="colorAccent">#2B2B2B</color>
 
     <!-- Location Search color -->
     <color name="foundArea">#525252</color>

@@ -4,8 +4,4 @@
         <CheckBoxPreference android:title="Use Imperial unit" android:summary="Disable for Metric unit (°C)" android:key="use_imperial"></CheckBoxPreference>
         <CheckBoxPreference android:title="Auto refresh on opening" android:summary="Auto refresh weather data on opening every 3 hours " android:key="auto_refresh" android:defaultValue="true"></CheckBoxPreference>
     </PreferenceCategory>
-    <PreferenceCategory android:title="ABOUT" android:key="cat_about">
-        <Preference android:title="Created by Sadayu Thongchan" android:summary="View application detail" android:key="about_detail"></Preference>
-        <Preference android:title="View External Resources" android:summary="Thank you!" android:key="about_resource"></Preference>
-    </PreferenceCategory>
 </PreferenceScreen>

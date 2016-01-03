@@ -7,6 +7,7 @@ import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.AsyncTask;
+import android.os.Build;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.speech.RecognizerIntent;
@@ -17,6 +18,8 @@ import android.text.TextUtils;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.Window;
+import android.view.WindowManager;
 import android.widget.AdapterView;
 import android.widget.ListView;
 import android.widget.SimpleAdapter;
@@ -44,8 +47,8 @@ public class weatherAddActivity extends AppCompatActivity {
     private ListView locationListView;
     private SimpleAdapter locationAdapter;
     private ArrayList<HashMap<String,String>> locationArrayList;
-    private final Uri uriLocation = Uri.parse("content://weatherCastDB/location");
-    private final Uri uriWeather = Uri.parse("content://weatherCastDB/Weather");
+    private final Uri uriLocation = Uri.parse("content://weatherCastV2DB/location");
+    private final Uri uriWeather = Uri.parse("content://weatherCastV2DB/Weather");
     private SharedPreferences sp;
     private SharedPreferences.Editor spEditor;
 
@@ -59,6 +62,7 @@ public class weatherAddActivity extends AppCompatActivity {
 
         initSharedPreferences();
         initInstances();
+        initActionAndStatusBar();
         initSearchView();
 
     }
@@ -73,8 +77,20 @@ public class weatherAddActivity extends AppCompatActivity {
         locationListView = (ListView) findViewById(R.id.locationListView);
     }
 
+    private void initActionAndStatusBar() {
+        int actionBarColor = sp.getInt("actionBarColor", R.color.colorPrimary);
+        int statusBarColor = sp.getInt("statusBarColor", R.color.colorPrimaryDark);
+        getSupportActionBar().setBackgroundDrawable(getResources().getDrawable(actionBarColor));
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            Window window = getWindow();
+            window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
+            window.clearFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS);
+            window.setStatusBarColor(getResources().getColor(statusBarColor));
+        }
+    }
+
     private void initSearchView() {
-        searchView.setVoiceSearch(false);
+        searchView.setVoiceSearch(true);
 //        searchView.setCursorDrawable(R.drawable.ic_menu_camera);
 //        searchView.setSuggestions(getResources().getStringArray(R.array.query_suggestions));
         searchView.setOnQueryTextListener(new MaterialSearchView.OnQueryTextListener() {
@@ -267,6 +283,7 @@ public class weatherAddActivity extends AppCompatActivity {
                     spEditor.putString("selectedArea2", area2);
                     spEditor.putString("selectedCountry", country);
                     spEditor.commit();
+                    progressBar.dismiss();
                     Intent intent = new Intent(weatherAddActivity.this, mainActivity.class);
                     startActivity(intent);
                 } else {
@@ -292,8 +309,9 @@ public class weatherAddActivity extends AppCompatActivity {
     public boolean onOptionsItemSelected(MenuItem item) {
         int id = item.getItemId();
         if (id == android.R.id.home) {
-            Intent intent = new Intent(weatherAddActivity.this, mainActivity.class);
-            startActivity(intent);
+//            Intent intent = new Intent(weatherAddActivity.this, mainActivity.class);
+//            startActivity(intent);
+            finish();
             return true;
         }
 

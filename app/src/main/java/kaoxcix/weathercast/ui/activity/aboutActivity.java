@@ -4,7 +4,6 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Build;
 import android.os.Bundle;
-import android.preference.PreferenceFragment;
 import android.preference.PreferenceManager;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
@@ -14,17 +13,16 @@ import android.view.WindowManager;
 
 import kaoxcix.weathercast.R;
 
-public class settingsActivity extends AppCompatActivity {
+public class aboutActivity extends AppCompatActivity {
     private SharedPreferences sp;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_settings);
+        setContentView(R.layout.activity_about);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-        getFragmentManager().beginTransaction().replace(R.id.settings_content, new settingsFragment()).commit();
 
         initSharedPreferences();
         initActionAndStatusBar();
@@ -46,19 +44,11 @@ public class settingsActivity extends AppCompatActivity {
         }
     }
 
-    public static class settingsFragment extends PreferenceFragment {
-        @Override
-        public void onCreate(final Bundle savedInstanceState) {
-            super.onCreate(savedInstanceState);
-            addPreferencesFromResource(R.xml.preference_settings);
-        }
-    }
-
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         int id = item.getItemId();
         if (id == android.R.id.home) {
-            Intent intent = new Intent(settingsActivity.this, mainActivity.class);
+            Intent intent = new Intent(aboutActivity.this, mainActivity.class);
             startActivity(intent);
             return true;
         }
@@ -66,10 +56,4 @@ public class settingsActivity extends AppCompatActivity {
         return super.onOptionsItemSelected(item);
     }
 
-    @Override
-    public void onBackPressed() {
-        super.onBackPressed();
-        Intent intent = new Intent(settingsActivity.this, mainActivity.class);
-        startActivity(intent);
-    }
 }

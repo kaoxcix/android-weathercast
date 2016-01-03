@@ -1,14 +1,18 @@
 package kaoxcix.weathercast.ui.activity;
 
+import android.app.ProgressDialog;
+import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.design.widget.FloatingActionButton;
+import android.support.design.widget.Snackbar;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.support.design.widget.NavigationView;
@@ -27,20 +31,28 @@ import android.widget.SimpleAdapter;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.google.gson.Gson;
+
 import java.text.DecimalFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.concurrent.TimeUnit;
 
 import kaoxcix.weathercast.R;
+import kaoxcix.weathercast.dao.weather.current.CurrentWeather;
+import kaoxcix.weathercast.dao.weather.forecast.ForecastWeather;
+import kaoxcix.weathercast.dao.weather.forecast.List;
+import kaoxcix.weathercast.util.assetUtils;
+import kaoxcix.weathercast.util.httpUtils;
 
 public class mainActivity extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener {
     private SharedPreferences sp;
     private SharedPreferences.Editor spEditor;
-    private final Uri uriLocation = Uri.parse("content://weatherCastDB/location");
-    private final Uri uriWeather = Uri.parse("content://weatherCastDB/Weather");
+    private final Uri uriLocation = Uri.parse("content://weatherCastV2DB/location");
+    private final Uri uriWeather = Uri.parse("content://weatherCastV2DB/Weather");
     private Boolean imperial;
     private Boolean auto_refresh;
     private double multiply = 1;
@@ -49,10 +61,13 @@ public class mainActivity extends AppCompatActivity implements NavigationView.On
     private ListView forecastWeatherListView;
     private ArrayList<HashMap<String,String>> currentWeatherInfoList;
     private ArrayList<HashMap<String,String>> forecastWeatherInfoList;
+    private SimpleAdapter currentWeatherAdapter;
+    private SimpleAdapter forecastWeatherAdapter;
     private String selectedArea1;
     private String selectedArea2;
     private String selectedCountry;
     private String location;
+    private String createDate;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -96,10 +111,9 @@ public class mainActivity extends AppCompatActivity implements NavigationView.On
 
     }
 
-    private void initWeatherInfoListView() {
+    private void getWeather(String date){
         imperial = sp.getBoolean("use_imperial", false);
         auto_refresh = sp.getBoolean("auto_refresh", true);
-        //calculate Fahrenheit
         if(imperial == true){
             multiply = 9.0/5.0;
             plus = 32.0;
@@ -108,6 +122,30 @@ public class mainActivity extends AppCompatActivity implements NavigationView.On
             multiply = 1;
             plus = 0;
         }
+
+        setCurrentWeatherInfo(location);
+        setForecastWeatherInfo(location);
+
+        if(auto_refresh == true) {
+            Date c_date = new Date(new SimpleDateFormat("MM/dd/yyyy HH:mm:ss").format(new Date()));
+            Date saved_date = new Date(date);
+            long diffInMillisec = c_date.getTime() - saved_date.getTime();
+            long diffInSec = TimeUnit.MILLISECONDS.toSeconds(diffInMillisec);
+            long seconds = diffInSec % 60;
+            diffInSec /= 60;
+            long minutes = diffInSec % 60;
+            diffInSec /= 60;
+            long hours = diffInSec % 24;
+            diffInSec /= 24;
+            long days = diffInSec;
+            Double diffHour = Double.parseDouble(hours + "." + minutes);
+            if (diffHour >= 3.0) {
+                getLatestSelectedWeatherInfo(selectedArea1, selectedArea2, selectedCountry);
+            }
+        }
+    }
+
+    private void initWeatherInfoListView() {
 
         currentWeatherListView.setDivider(null);
         currentWeatherListView.setDividerHeight(0);
@@ -118,6 +156,7 @@ public class mainActivity extends AppCompatActivity implements NavigationView.On
         selectedArea2 = sp.getString("selectedArea2", "");
         selectedCountry = sp.getString("selectedCountry", "");
         location = (selectedArea1+" "+selectedArea2).trim();
+        createDate = null;
 
         Cursor checkLocationCursor = getApplicationContext().getContentResolver().query(uriLocation, null, "area1 = '" + selectedArea1.trim() + "' and area2 = '" + selectedArea2.trim() + "' and country = '" + selectedCountry.trim() + "'", null, null);
         if(checkLocationCursor.getCount() == 0){
@@ -131,44 +170,228 @@ public class mainActivity extends AppCompatActivity implements NavigationView.On
                     selectedArea2 = firstWeatherCursor.getString(firstWeatherCursor.getColumnIndex("area2"));
                     selectedCountry = firstWeatherCursor.getString(firstWeatherCursor.getColumnIndex("country"));
                     location = (selectedArea1+" "+selectedArea2).trim();
+                    Cursor dateCursor = getApplicationContext().getContentResolver().query(uriWeather, null, "area = '"+location+"' and current = 'true'", null, null);
+                    if(dateCursor.moveToFirst()) {
+                        createDate = dateCursor.getString(dateCursor.getColumnIndex("created"));
+                    }
                 }
                 getSupportActionBar().setTitle(location);
-                setCurrentWeatherInfo(location);
-                setForecastWeatherInfo(location);
+                getWeather(createDate);
                 spEditor.putString("selectedArea1", selectedArea1);
                 spEditor.putString("selectedArea2", selectedArea2);
                 spEditor.putString("selectedCountry", selectedCountry);
                 spEditor.commit();
-
-                int actionBarColor = sp.getInt("actionBarColor", R.color.colorPrimary);
-                int statusBarColor = sp.getInt("statusBarColor", R.color.colorPrimaryDark);
-                getSupportActionBar().setBackgroundDrawable(getResources().getDrawable(actionBarColor));
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-                    Window window = getWindow();
-                    window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
-                    window.clearFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS);
-                    window.setStatusBarColor(getResources().getColor(statusBarColor));
-                }
             }
         } else {
             getSupportActionBar().setTitle(location);
-            setCurrentWeatherInfo(location);
-            setForecastWeatherInfo(location);
-
-            int actionBarColor = sp.getInt("actionBarColor", R.color.colorPrimary);
-            int statusBarColor = sp.getInt("statusBarColor", R.color.colorPrimaryDark);
-            getSupportActionBar().setBackgroundDrawable(getResources().getDrawable(actionBarColor));
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-                Window window = getWindow();
-                window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
-                window.clearFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS);
-                window.setStatusBarColor(getResources().getColor(statusBarColor));
+            Cursor dateCursor = getApplicationContext().getContentResolver().query(uriWeather, null, "area = '"+location+"' and current = 'true'", null, null);
+            if(dateCursor.moveToFirst()) {
+                createDate = dateCursor.getString(dateCursor.getColumnIndex("created"));
             }
+            getWeather(createDate);
         }
     }
 
-    //set current listview
+
+    private void getLatestSelectedWeatherInfo(final String area1, final String area2, final String country) {
+        final View rootView = findViewById(R.id.rootView);
+        final ProgressDialog progressBar = new ProgressDialog(mainActivity.this);
+        new AsyncTask<Void, Void, String>() {
+            private String area;
+            @Override
+            protected void onPreExecute() {
+                progressBar.setMessage(getString(R.string.message_progress_loading));
+                progressBar.setProgressStyle(ProgressDialog.STYLE_SPINNER);
+                progressBar.setCancelable(true);
+                progressBar.show();
+            }
+
+            @Override
+            protected String doInBackground(Void... voids) {
+                area = (area1+" "+area2).trim();
+
+                getApplicationContext().getContentResolver().delete(uriWeather, "area = '"+area+"'", null);
+
+                httpUtils httpUtil = new httpUtils();
+                ArrayList<String> weatherData = new ArrayList<String>();
+                String location = (area1.trim()+" "+area2.trim()).trim()+","+country.trim();
+                weatherData.add(httpUtil.getCurrentWeatherData(location));
+                weatherData.add(httpUtil.getForecastWeatherData(location));
+
+                Gson gson = new Gson();
+
+                final CurrentWeather currentWeather = gson.fromJson(weatherData.get(0).toString(), CurrentWeather.class);
+                final ForecastWeather forecastWeather = gson.fromJson(weatherData.get(1).toString(), ForecastWeather.class);
+                String currentCod = currentWeather.getCod();
+                String forecastCod = forecastWeather.getCod();
+
+                if(currentCod.equals("200") && forecastCod.equals("200")) {
+                    // put selected area to app database "location"
+                    ContentValues locationValues = new ContentValues();
+                    locationValues.put("area1", area1);
+                    locationValues.put("area2", area2);
+                    locationValues.put("country", country);
+
+                    //put current Weather data to app database "weather"
+                    ContentValues currentValues = new ContentValues();
+                    currentValues.put("area", (area1+" "+area2).trim());
+                    currentValues.put("date", new SimpleDateFormat("MM/dd/yyyy HH:mm:ss").format(new Date(currentWeather.getDt() * 1000L)));
+                    currentValues.put("temp", currentWeather.getMain().getTemp());
+                    currentValues.put("sunrise", new SimpleDateFormat("HH:mm").format(new Date(currentWeather.getSys().getSunrise() * 1000L)));
+                    currentValues.put("sunset", new SimpleDateFormat("HH:mm").format(new Date(currentWeather.getSys().getSunset() * 1000L)));
+                    currentValues.put("weather", currentWeather.getLatestWeatherId());
+                    currentValues.put("description", currentWeather.getLatestWeatherDescription());
+                    currentValues.put("created", new SimpleDateFormat("MM/dd/yyyy HH:mm:ss").format(new Date()));
+                    currentValues.put("current", "true");
+                    getApplicationContext().getContentResolver().insert(uriWeather, currentValues);
+
+                    //check to get only forecast data (json data have current data also)
+                    int check = 0;
+                    SimpleDateFormat dateFormat = new SimpleDateFormat("MM/dd/yyyy");
+                    Date getDate = null;
+                    for(List list : forecastWeather.getList()) {
+                        if(check == 6){
+                            break;
+                        }
+                        try {
+                            getDate = dateFormat.parse(dateFormat.format(new Date(list.getDt() * 1000L)).toString());
+                        } catch (ParseException e) {
+                            e.printStackTrace();
+                        }
+                        if (getDate.after(new Date())) {
+                            ContentValues forecastValues = new ContentValues();
+                            forecastValues.put("area", (area1 + " " + area2).trim());
+                            forecastValues.put("date", new SimpleDateFormat("MM/dd/yyyy HH:mm:ss").format(new Date(list.getDt() * 1000L)));
+                            forecastValues.put("temp", list.getTemp().getDay());
+                            forecastValues.put("temp_min", list.getTemp().getMin());
+                            forecastValues.put("temp_max", list.getTemp().getMax());
+                            forecastValues.put("weather", list.getLatestWeatherId());
+                            forecastValues.put("description", list.getLatestWeatherDescription());
+                            forecastValues.put("created", new SimpleDateFormat("MM/dd/yyyy HH:mm:ss").format(new Date()));
+                            getApplicationContext().getContentResolver().insert(uriWeather, forecastValues);
+                            check++;
+                        }
+                    }
+                } else {
+                    getApplicationContext().getContentResolver().delete(uriLocation, "area1 = '"+area1+"' and area2 = '"+area2+"'", null);
+                    getApplicationContext().getContentResolver().delete(uriWeather, "area = '"+area+"'", null);
+                }
+                return null;
+            }
+
+            @Override
+            protected void onPostExecute(String string) {
+                progressBar.dismiss();
+                setCurrentWeatherInfo(location);
+                setForecastWeatherInfo(location);
+                Snackbar.make(rootView, getString(R.string.message_update_current_weather), Snackbar.LENGTH_SHORT).show();
+            }
+        }.execute();
+    }
+
+    private void updateAllWeatherInfo() {
+        final View rootView = findViewById(R.id.rootView);
+        final ProgressDialog progressBar = new ProgressDialog(mainActivity.this);
+        new AsyncTask<Void, Void, String>() {
+            private String area, area1, area2, country;
+            @Override
+            protected void onPreExecute() {
+                progressBar.setMessage(getString(R.string.message_progress_loading));
+                progressBar.setProgressStyle(ProgressDialog.STYLE_SPINNER);
+                progressBar.setCancelable(true);
+                progressBar.show();
+            }
+
+            @Override
+            protected String doInBackground(Void... voids) {
+                Cursor locationCursor = getApplicationContext().getContentResolver().query(uriLocation, null, null, null, null);
+                while (locationCursor.moveToNext()) {
+                    area1 = locationCursor.getString(locationCursor.getColumnIndex("area1"));
+                    area2 = locationCursor.getString(locationCursor.getColumnIndex("area2"));
+                    country = locationCursor.getString(locationCursor.getColumnIndex("country"));
+                    area = (area1+" "+area2).trim();
+
+                    getApplicationContext().getContentResolver().delete(uriWeather, "area = '"+area+"'", null);
+
+                    httpUtils httpUtil = new httpUtils();
+                    ArrayList<String> weatherData = new ArrayList<String>();
+                    String location = (area1.trim()+" "+area2.trim()).trim()+","+country.trim();
+                    weatherData.add(httpUtil.getCurrentWeatherData(location));
+                    weatherData.add(httpUtil.getForecastWeatherData(location));
+
+                    Gson gson = new Gson();
+
+                    final CurrentWeather currentWeather = gson.fromJson(weatherData.get(0).toString(), CurrentWeather.class);
+                    final ForecastWeather forecastWeather = gson.fromJson(weatherData.get(1).toString(), ForecastWeather.class);
+                    String currentCod = currentWeather.getCod();
+                    String forecastCod = forecastWeather.getCod();
+
+                    if(currentCod.equals("200") && forecastCod.equals("200")) {
+                        // put selected area to app database "location"
+                        ContentValues locationValues = new ContentValues();
+                        locationValues.put("area1", area1);
+                        locationValues.put("area2", area2);
+                        locationValues.put("country", country);
+
+                        //put current Weather data to app database "weather"
+                        ContentValues currentValues = new ContentValues();
+                        currentValues.put("area", (area1+" "+area2).trim());
+                        currentValues.put("date", new SimpleDateFormat("MM/dd/yyyy HH:mm:ss").format(new Date(currentWeather.getDt() * 1000L)));
+                        currentValues.put("temp", currentWeather.getMain().getTemp());
+                        currentValues.put("sunrise", new SimpleDateFormat("HH:mm").format(new Date(currentWeather.getSys().getSunrise() * 1000L)));
+                        currentValues.put("sunset", new SimpleDateFormat("HH:mm").format(new Date(currentWeather.getSys().getSunset() * 1000L)));
+                        currentValues.put("weather", currentWeather.getLatestWeatherId());
+                        currentValues.put("description", currentWeather.getLatestWeatherDescription());
+                        currentValues.put("created", new SimpleDateFormat("MM/dd/yyyy HH:mm:ss").format(new Date()));
+                        currentValues.put("current", "true");
+                        getApplicationContext().getContentResolver().insert(uriWeather, currentValues);
+
+                        //check to get only forecast data (json data have current data also)
+                        int check = 0;
+                        SimpleDateFormat dateFormat = new SimpleDateFormat("MM/dd/yyyy");
+                        Date getDate = null;
+                        for(List list : forecastWeather.getList()) {
+                            if(check == 6){
+                                break;
+                            }
+                            try {
+                                getDate = dateFormat.parse(dateFormat.format(new Date(list.getDt() * 1000L)).toString());
+                            } catch (ParseException e) {
+                                e.printStackTrace();
+                            }
+                            if (getDate.after(new Date())) {
+                                ContentValues forecastValues = new ContentValues();
+                                forecastValues.put("area", (area1 + " " + area2).trim());
+                                forecastValues.put("date", new SimpleDateFormat("MM/dd/yyyy HH:mm:ss").format(new Date(list.getDt() * 1000L)));
+                                forecastValues.put("temp", list.getTemp().getDay());
+                                forecastValues.put("temp_min", list.getTemp().getMin());
+                                forecastValues.put("temp_max", list.getTemp().getMax());
+                                forecastValues.put("weather", list.getLatestWeatherId());
+                                forecastValues.put("description", list.getLatestWeatherDescription());
+                                forecastValues.put("created", new SimpleDateFormat("MM/dd/yyyy HH:mm:ss").format(new Date()));
+                                getApplicationContext().getContentResolver().insert(uriWeather, forecastValues);
+                                check++;
+                            }
+                        }
+                    } else {
+                        getApplicationContext().getContentResolver().delete(uriLocation, "area1 = '"+area1+"' and area2 = '"+area2+"'", null);
+                        getApplicationContext().getContentResolver().delete(uriWeather, "area = '"+area+"'", null);
+                    }
+                }
+                return null;
+            }
+
+            @Override
+            protected void onPostExecute(String string) {
+                initWeatherInfoListView();
+                progressBar.dismiss();
+                Snackbar.make(rootView, getString(R.string.message_update_all_weather), Snackbar.LENGTH_SHORT).show();
+            }
+        }.execute();
+    }
+
     private void setCurrentWeatherInfo(String location){
+        final assetUtils assetUtils = new assetUtils(this);
         Cursor currentCursor = getApplicationContext().getContentResolver().query(uriWeather, null, "area = '"+location+"' and current = 'true'", null, null);
         String[] from = new String[]{"temp", "sunrise", "sunset", "description", "updated"};
         int[] to = new int[]{R.id.txtCurTemp, R.id.txtCurSunrise, R.id.txtCurSunset, R.id.txtCurDescription, R.id.txtCurUpdated};
@@ -203,27 +426,37 @@ public class mainActivity extends AppCompatActivity implements NavigationView.On
                 TextView txtCurSunset = (TextView ) convertView.findViewById(R.id.txtCurSunset);
 
                 //set Sunrise Sunset image black/white
-                imgvSunrise.setImageResource(getSunImageId(Integer.parseInt(map.get("weather")), "simple_weather_icon_57"));
-                imgvSunset.setImageResource(getSunImageId(Integer.parseInt(map.get("weather")), "simple_weather_icon_56"));
+                imgvSunrise.setImageResource(assetUtils.getSunImageId(Integer.parseInt(map.get("weather")), "simple_weather_icon_57"));
+                imgvSunset.setImageResource(assetUtils.getSunImageId(Integer.parseInt(map.get("weather")), "simple_weather_icon_56"));
 
                 //set text color acconding to bg color
-                txtCurTemp.setTextColor(getResources().getColor(getFontColorId(Integer.parseInt(map.get("weather")))));
-                txtCurSunrise.setTextColor(getResources().getColor(getFontColorId(Integer.parseInt(map.get("weather")))));
-                txtCurSunset.setTextColor(getResources().getColor(getFontColorId(Integer.parseInt(map.get("weather")))));
+                txtCurTemp.setTextColor(getResources().getColor(assetUtils.getFontColorId(Integer.parseInt(map.get("weather")))));
+                txtCurSunrise.setTextColor(getResources().getColor(assetUtils.getFontColorId(Integer.parseInt(map.get("weather")))));
+                txtCurSunset.setTextColor(getResources().getColor(assetUtils.getFontColorId(Integer.parseInt(map.get("weather")))));
 
                 //set bg color
-                spEditor.putInt("statusBarColor", getBackgroundDarkColorId(Integer.parseInt(map.get("weather"))));
-                spEditor.putInt("actionBarColor", getBackgroundColorId(Integer.parseInt(map.get("weather"))));
+                int statusBarColor = assetUtils.getBackgroundDarkColorId(Integer.parseInt(map.get("weather")));
+                int actionBarColor = assetUtils.getBackgroundColorId(Integer.parseInt(map.get("weather")));
+                spEditor.putInt("statusBarColor", statusBarColor);
+                spEditor.putInt("actionBarColor", actionBarColor);
                 spEditor.commit();
-                convertView.setBackgroundResource(getBackgroundColorId(Integer.parseInt(map.get("weather"))));
-                imgvCurIcon.setImageResource(getWeatherImageId(Integer.parseInt(map.get("weather"))));
+                getSupportActionBar().setBackgroundDrawable(getResources().getDrawable(actionBarColor));
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                    Window window = getWindow();
+                    window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
+                    window.clearFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS);
+                    window.setStatusBarColor(getResources().getColor(statusBarColor));
+                }
+
+                convertView.setBackgroundResource(assetUtils.getBackgroundColorId(Integer.parseInt(map.get("weather"))));
+                imgvCurIcon.setImageResource(assetUtils.getWeatherImageId(Integer.parseInt(map.get("weather"))));
                 return super.getView(position, convertView, parent);
             }};
         currentWeatherListView.setAdapter(mAdapter);
     }
 
-    //set forecasr listview
     private void setForecastWeatherInfo(String location){
+        final assetUtils assetUtils = new assetUtils(this);
         Cursor forecastCursor = getApplicationContext().getContentResolver().query(uriWeather, null, "area = '"+location+"' and current = 'false'", null, null);
         String[] from = new String[]{"day", "temp", "description"};
         int[] to = new int[]{R.id.txtForeDay, R.id.txtForeTemp, R.id.txtForeDescription};
@@ -265,107 +498,16 @@ public class mainActivity extends AppCompatActivity implements NavigationView.On
                 TextView txtForeDay = (TextView ) convertView.findViewById(R.id.txtForeDay);
                 TextView txtForeTemp = (TextView ) convertView.findViewById(R.id.txtForeTemp);
 
-                convertView.setBackgroundResource(getBackgroundColorId(Integer.parseInt(map.get("weather"))));
+                convertView.setBackgroundResource(assetUtils.getBackgroundColorId(Integer.parseInt(map.get("weather"))));
                 if(position == getCount()-1){
-                    forecastWeatherListView.setBackgroundResource(getBackgroundColorId(Integer.parseInt(map.get("weather"))));
+                    forecastWeatherListView.setBackgroundResource(assetUtils.getBackgroundColorId(Integer.parseInt(map.get("weather"))));
                 }
-                imgvForeIcon.setImageResource(getWeatherImageId(Integer.parseInt(map.get("weather"))));
-                txtForeDay.setTextColor(getResources().getColor(getFontColorId(Integer.parseInt(map.get("weather")))));
-                txtForeTemp.setTextColor(getResources().getColor(getFontColorId(Integer.parseInt(map.get("weather")))));
+                imgvForeIcon.setImageResource(assetUtils.getWeatherImageId(Integer.parseInt(map.get("weather"))));
+                txtForeDay.setTextColor(getResources().getColor(assetUtils.getFontColorId(Integer.parseInt(map.get("weather")))));
+                txtForeTemp.setTextColor(getResources().getColor(assetUtils.getFontColorId(Integer.parseInt(map.get("weather")))));
                 return super.getView(position, convertView, parent);
             }};
         forecastWeatherListView.setAdapter(mAdapter);
-    }
-
-    //Return Color ImageId BackgroundId FontColor
-    private Integer getWeatherImageId(int id){
-        if(id >= 200 && id <= 232){return R.drawable.simple_weather_icon_27;} //Thunderstorm, Tornado
-        else if(id >= 900 && id <= 902){return R.drawable.simple_weather_icon_27;} //Thunderstorm, Tornado
-        else if(id >= 951 && id <= 956){return R.drawable.simple_weather_icon_30;} //Breeze
-        else if(id >= 300 && id <= 321){return R.drawable.simple_weather_icon_21;} //Drizzle
-        else if(id >= 500 && id <= 531){return R.drawable.simple_weather_icon_11;} //Rain
-        else if(id >= 600 && id <= 622){return R.drawable.simple_weather_icon_24_black;} //Snow-
-        else if(id >= 701 && id <= 781){return R.drawable.simple_weather_icon_10;} //Atmosphere
-        else if(id == 800){return R.drawable.simple_weather_icon_01;} //Clear sky
-        else if(id >= 801 && id <= 804){return R.drawable.simple_weather_icon_06_black;} //Clouds-
-        else if(id == 903){return R.drawable.simple_weather_icon_53_black;} //Cold-
-        else if(id == 904){return R.drawable.simple_weather_icon_55;} //Hot
-        else if(id == 905){return R.drawable.simple_weather_icon_30;} //Windy
-        else if(id >= 957 && id <= 962){return R.drawable.simple_weather_icon_30;} //Gale
-        else if(id == 906){return R.drawable.simple_weather_icon_28_black;} //Hail-
-        else{return R.drawable.simple_weather_icon_04_black;} //-
-    }
-
-    private Integer getBackgroundColorId(int id){
-        if(id >= 200 && id <= 232){return R.color.weatherThunderstormBlue;}//Thunderstorm, Tornado
-        else if(id >= 900 && id <= 902){return R.color.weatherThunderstormBlue;} //Thunderstorm, Tornado
-        else if(id >= 951 && id <= 956){return R.color.weatherLightWindBrown;} //Breeze
-        else if(id >= 300 && id <= 321){return R.color.weatherLightRainyBlue;} //Drizzle
-        else if(id >= 500 && id <= 531){return R.color.weatherDarkRainyBlue;} //Rain
-        else if(id >= 600 && id <= 622){return R.color.weatherSnowWhite;} //Snow-
-        else if(id >= 701 && id <= 781){return R.color.weatherLightWindBrown;} //Atmosphere
-        else if(id == 800){return R.color.weatherSunnyRed;} //Clear sky
-        else if(id >= 801 && id <= 804){return R.color.weatherCloudCream;} //Clouds-
-        else if(id == 903){return R.color.weatherSnowWhite;} //Cold-
-        else if(id == 904){return R.color.weatherSunnyRed;} //Hot
-        else if(id == 905){return R.color.weatherLightWindBrown;} //Windy
-        else if(id >= 957 && id <= 962){return R.color.weatherDarkWindBrown;} //Gale
-        else if(id == 906){return R.color.weatherSnowWhite;} //Hail-
-        else{return R.color.weatherOther;} //-
-    }
-
-    private Integer getBackgroundDarkColorId(int id){
-        if(id >= 200 && id <= 232){return R.color.weatherThunderstormBlueDark;}//Thunderstorm, Tornado
-        else if(id >= 900 && id <= 902){return R.color.weatherThunderstormBlueDark;} //Thunderstorm, Tornado
-        else if(id >= 951 && id <= 956){return R.color.weatherLightWindBrownDark;} //Breeze
-        else if(id >= 300 && id <= 321){return R.color.weatherLightRainyBlueDark;} //Drizzle
-        else if(id >= 500 && id <= 531){return R.color.weatherDarkRainyBlueDark;} //Rain
-        else if(id >= 600 && id <= 622){return R.color.weatherSnowWhiteDark;} //Snow-
-        else if(id >= 701 && id <= 781){return R.color.weatherLightWindBrownDark;} //Atmosphere
-        else if(id == 800){return R.color.weatherSunnyRedDark;} //Clear sky
-        else if(id >= 801 && id <= 804){return R.color.weatherCloudCreamDark;} //Clouds-
-        else if(id == 903){return R.color.weatherSnowWhiteDark;} //Cold-
-        else if(id == 904){return R.color.weatherSunnyRedDark;} //Hot
-        else if(id == 905){return R.color.weatherLightWindBrownDark;} //Windy
-        else if(id >= 957 && id <= 962){return R.color.weatherDarkWindBrownDark;} //Gale
-        else if(id == 906){return R.color.weatherSnowWhiteDark;} //Hail-
-        else{return R.color.weatherOtherDark;} //-
-    }
-
-    private Integer getFontColorId(int id){
-        if(id >= 200 && id <= 232){return R.color.weatherFontOpacityBlack;}//Thunderstorm, Tornado
-        else if(id >= 900 && id <= 902){return R.color.weatherFontWhite;} //Thunderstorm, Tornado
-        else if(id >= 951 && id <= 956){return R.color.weatherFontWhite;} //Breeze
-        else if(id >= 300 && id <= 321){return R.color.weatherFontWhite;} //Drizzle
-        else if(id >= 500 && id <= 531){return R.color.weatherFontWhite;} //Rain
-        else if(id >= 600 && id <= 622){return R.color.weatherFontOpacityBlack;} //Snow-
-        else if(id >= 701 && id <= 781){return R.color.weatherFontWhite;} //Atmosphere
-        else if(id == 800){return R.color.weatherFontWhite;} //Clear sky
-        else if(id >= 801 && id <= 804){return R.color.weatherFontOpacityBlack;} //Clouds-
-        else if(id == 903){return R.color.weatherFontOpacityBlack;} //Cold-
-        else if(id == 904){return R.color.weatherFontWhite;} //Hot
-        else if(id == 905){return R.color.weatherFontWhite;} //Windy
-        else if(id >= 957 && id <= 962){return R.color.weatherFontWhite;} //Gale
-        else if(id == 906){return R.color.weatherFontOpacityBlack;} //Hail-
-        else{return R.color.weatherFontOpacityBlack;} //-
-    }
-
-    private Integer getSunImageId(int id,String imageId){
-        if(id >= 200 && id <= 232){return getResources().getIdentifier(imageId, "drawable", getApplicationContext().getPackageName());} //Thunderstorm, Tornado
-        else if(id >= 900 && id <= 902){return getResources().getIdentifier(imageId, "drawable", getApplicationContext().getPackageName());} //Thunderstorm, Tornado
-        else if(id >= 951 && id <= 956){return getResources().getIdentifier(imageId, "drawable", getApplicationContext().getPackageName());} //Breeze
-        else if(id >= 300 && id <= 321){return getResources().getIdentifier(imageId, "drawable", getApplicationContext().getPackageName());} //Drizzle
-        else if(id >= 500 && id <= 531){return getResources().getIdentifier(imageId, "drawable", getApplicationContext().getPackageName());} //Rain
-        else if(id >= 600 && id <= 622){return getResources().getIdentifier(imageId+"_black", "drawable", getApplicationContext().getPackageName());} //Snow-
-        else if(id >= 701 && id <= 781){return getResources().getIdentifier(imageId, "drawable", getApplicationContext().getPackageName());} //Atmosphere
-        else if(id == 800){return getResources().getIdentifier(imageId, "drawable", getApplicationContext().getPackageName());} //Clear sky
-        else if(id >= 801 && id <= 804){return getResources().getIdentifier(imageId+"_black", "drawable", getApplicationContext().getPackageName());} //Clouds-
-        else if(id == 903){return getResources().getIdentifier(imageId+"_black", "drawable", getApplicationContext().getPackageName());} //Cold-
-        else if(id == 904){return getResources().getIdentifier(imageId, "drawable", getApplicationContext().getPackageName());} //Hot
-        else if(id == 905){return getResources().getIdentifier(imageId, "drawable", getApplicationContext().getPackageName());} //Windy
-        else if(id >= 957 && id <= 962){return getResources().getIdentifier(imageId, "drawable", getApplicationContext().getPackageName());} //Gale
-        else if(id == 906){return getResources().getIdentifier(imageId+"_black", "drawable", getApplicationContext().getPackageName());} //Hail-
-        else{return getResources().getIdentifier(imageId+"_black", "drawable", getApplicationContext().getPackageName());} //-
     }
 
     @Override
@@ -389,6 +531,11 @@ public class mainActivity extends AppCompatActivity implements NavigationView.On
             startActivity(intent);
         } else if (id == R.id.nav_setting) {
             Intent intent = new Intent(this, settingsActivity.class);
+            startActivity(intent);
+        } else if (id == R.id.nav_weather_update) {
+            updateAllWeatherInfo();
+        } else if (id == R.id.nav_about) {
+            Intent intent = new Intent(this, aboutActivity.class);
             startActivity(intent);
         }
 

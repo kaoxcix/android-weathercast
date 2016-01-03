@@ -17,8 +17,8 @@ public class useContentProvider extends ContentProvider {
 	static UriMatcher matcher;
 	{
 		matcher = new UriMatcher(UriMatcher.NO_MATCH);
-		matcher.addURI("weatherCastDB", "location", 1);
-		matcher.addURI("weatherCastDB", "Weather", 2);
+		matcher.addURI("weatherCastV2DB", "location", 1);
+		matcher.addURI("weatherCastV2DB", "Weather", 2);
 	}
 	
 	
