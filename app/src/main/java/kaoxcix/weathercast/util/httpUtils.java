@@ -12,9 +12,9 @@ import java.net.URLEncoder;
 
 public class httpUtils {
     private final String GOOGLE_PLACE_API_URL = "https://maps.googleapis.com/maps/api/place/autocomplete/json";
-    private final String GOOGLE_PLACE_API_AUTH_KEY = "AIzaSyDSDO6K4wXMViN4wCzUJ40FDA4bFyJ22KA";
+    private final String GOOGLE_PLACE_API_AUTH_KEY = "xxx";
     private final String OPENWEATHER_API_URL = "http://api.openweathermap.org/data/2.5/";
-    private final String OPENWEATHER_API_KEY = "c9807a3a0d005ca32f4223bb3939c59b";
+    private final String OPENWEATHER_API_KEY = "xxx";
 
     public httpUtils() {
     }
